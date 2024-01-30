@@ -12,7 +12,15 @@ import (
 
 var (
 	coreServer *core.Instance
+	isRunning  bool
 )
+
+func IsRunning() bool {
+	if coreServer == nil {
+		return false
+	}
+	return isRunning
+}
 
 func StartXray(configPath string) (*core.Instance, error) {
 	file := cmdarg.Arg{configPath}
@@ -55,6 +63,7 @@ func RunXray(datDir string, configPath string, maxMemory int64) error {
 	if err := coreServer.Start(); err != nil {
 		return err
 	}
+	isRunning = true
 
 	debug.FreeOSMemory()
 	return nil
@@ -65,6 +74,7 @@ func StopXray() error {
 	if coreServer != nil {
 		err := coreServer.Close()
 		coreServer = nil
+		isRunning = false
 		if err != nil {
 			return err
 		}

@@ -50,6 +50,10 @@ func CustomUUID(text string) string {
 	return xray.CustomUUID(text)
 }
 
+func IsRunning() bool {
+	return xray.IsRunning()
+}
+
 // Test Xray Config.
 // datDir means the dir which geosite.dat and geoip.dat are in.
 // configPath means the config.json file path.
