@@ -2,6 +2,7 @@ package xray
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"reflect"
@@ -72,4 +73,73 @@ func QueryStats(server string, dir string) error {
 		return err
 	}
 	return nil
+}
+
+func QueryTraffic(server string,userEmail string,inboundTag string, outboundTag , dir string) (error) {
+	conn, err := grpc.Dial(server, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := statsService.NewStatsServiceClient(conn)
+
+	respUpUser, err := client.QueryStats(context.Background(), &statsService.QueryStatsRequest{
+		Pattern: "user>>>" + userEmail + ">>>traffic>>>uplink",
+		Reset_:  false,
+	})
+	if err != nil {
+		return err
+	}
+	respDownUser, err := client.QueryStats(context.Background(), &statsService.QueryStatsRequest{
+		Pattern: "user>>>" + userEmail + ">>>traffic>>>downlink",
+		Reset_:  false,
+	})
+	if err != nil {
+		return err
+	}
+	respUpIn, err := client.QueryStats(context.Background(), &statsService.QueryStatsRequest{
+		Pattern: "inbound>>>" + inboundTag + ">>>traffic>>>uplink",
+		Reset_:  false,
+	})
+	if err != nil {
+		return err
+	}
+	
+	respDownIn, err := client.QueryStats(context.Background(), &statsService.QueryStatsRequest{
+		Pattern: "inbound>>>" + inboundTag + ">>>traffic>>>downlink",
+		Reset_:  false,
+	})
+	if err != nil {
+		return err
+	}
+
+	respUpOut, err := client.QueryStats(context.Background(), &statsService.QueryStatsRequest{
+		Pattern: "outbound>>>" + outboundTag + ">>>traffic>>>uplink",
+		Reset_:  false,
+	})
+	respDownOut, err := client.QueryStats(context.Background(), &statsService.QueryStatsRequest{
+		Pattern: "outbound>>>" + outboundTag + ">>>traffic>>>downlink",
+		Reset_:  false,
+	})
+	if err != nil {
+		return err
+	}
+
+	var combinedStats []*statsService.Stat
+	combinedStats = append(respUpUser.GetStat(), respDownUser.GetStat()...)
+	combinedStats = append(combinedStats,respUpIn.GetStat()...)
+	combinedStats = append(combinedStats,respDownIn.GetStat()...)
+	combinedStats = append(combinedStats,respUpOut.GetStat()...)
+	combinedStats = append(combinedStats,respDownOut.GetStat()...)
+
+	jsonData, err := json.Marshal(combinedStats)
+	if err != nil {
+		return err
+	}
+
+	statsPath := path.Join(dir, "trafficStats.json")
+	err = nodep.WriteBytes(jsonData, statsPath)
+	return err
+
 }

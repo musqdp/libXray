@@ -45,6 +45,17 @@ func QueryStats(server string, dir string) string {
 	return nodep.WrapError(err)
 }
 
+// query traffic stats
+// server means The API server address, like "127.0.0.1:8080".
+// dir means the dir which result json will be wrote to.
+// userEmail filter stats by user email
+// inboundTag filter stats by inbound tag globally
+// outboundTag filter stats by outbound tag globally
+func QueryTraffic(server string, userEmail string, inboundTag string, outboundTag string, dir string) string {
+	err := xray.QueryTraffic(server, userEmail, inboundTag, outboundTag, dir)
+	return nodep.WrapError(err)
+}
+
 // convert text to uuid
 func CustomUUID(text string) string {
 	return xray.CustomUUID(text)
